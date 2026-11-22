@@ -1,0 +1,422 @@
+<title>Lieferanten-Selbstauskunft</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{
+  --bg:#f6f4ee; --surface:#ffffff; --surface-2:#f0ede4; --text:#1d2430; --muted:#5d6675;
+  --border:#ddd8cb; --accent:#1f5f8b; --accent-ink:#ffffff; --accent-soft:#e3eef6;
+  --ok:#2e7d4f; --warn:#b5651d; --err:#b3261e; --radius:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181e; --surface:#1c222a; --surface-2:#242b35; --text:#e8ebef; --muted:#9aa3af;
+    --border:#323a46; --accent:#6fb1df; --accent-ink:#0d1a24; --accent-soft:#1f3242;
+    --ok:#6cc08f; --warn:#e3a35f; --err:#ef7b72; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181e; --surface:#1c222a; --surface-2:#242b35; --text:#e8ebef; --muted:#9aa3af;
+  --border:#323a46; --accent:#6fb1df; --accent-ink:#0d1a24; --accent-soft:#1f3242;
+  --ok:#6cc08f; --warn:#e3a35f; --err:#ef7b72; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding-block:24px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:20px;flex:none}
+.brand h1{font-size:20px;margin:0;line-height:1.2}
+.brand p{margin:0;color:var(--muted);font-size:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.intro p{margin:.4em 0}
+.steps{display:flex;gap:6px;overflow-x:auto;padding:4px 0 12px;margin:16px 0 8px;scrollbar-width:thin}
+.steps button{flex:none;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.steps button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.steps button.done:not(.active){color:var(--ok);border-color:var(--ok)}
+.progress{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.progress > div{height:100%;background:var(--accent);width:0;transition:width .3s}
+h2{font-size:22px;margin:0 0 4px}
+.section-desc{color:var(--muted);margin:0 0 20px}
+.field{margin-bottom:20px}
+.field > label, .field > .label{display:block;font-weight:600;margin-bottom:6px}
+.req{color:var(--err);margin-left:2px}
+.hint{color:var(--muted);font-size:13px;margin-top:4px}
+input[type=text],input[type=email],input[type=tel],input[type=url],input[type=number],input[type=date],select,textarea{
+  width:100%;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+textarea{min-height:90px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.choice{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;background:var(--surface)}
+.choice:hover{border-color:var(--accent)}
+.choice input{margin-top:4px;accent-color:var(--accent)}
+.choice.checked{background:var(--accent-soft);border-color:var(--accent)}
+.scale{display:flex;gap:6px;flex-wrap:wrap}
+.scale label{border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer}
+.scale input{display:none}
+.scale label.checked{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.field.invalid input,.field.invalid select,.field.invalid textarea,.field.invalid .choices{outline:2px solid var(--err);outline-offset:2px;border-radius:8px}
+.err-msg{color:var(--err);font-size:13px;margin-top:4px;display:none}
+.field.invalid .err-msg{display:block}
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:600;border-radius:8px;padding:10px 18px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.secondary{background:transparent;color:var(--accent)}
+.btn.ghost{border-color:var(--border);background:transparent;color:var(--text)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar .btn{padding:6px 12px;font-size:13px}
+.save-state{font-size:13px;color:var(--muted)}
+.summary h3{font-size:16px;margin:24px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.summary dl{display:grid;grid-template-columns:minmax(140px,38%) 1fr;gap:6px 16px;margin:0}
+.summary dt{color:var(--muted)}
+.summary dd{margin:0;white-space:pre-wrap;word-break:break-word}
+@media (max-width:640px){.summary dl{grid-template-columns:1fr}.summary dd{margin-bottom:8px}}
+.missing{color:var(--warn)}
+.notice{background:var(--accent-soft);border-radius:8px;padding:12px 14px;margin:16px 0;font-size:14px}
+.success{border-left:4px solid var(--ok)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
+.hidden{display:none!important}
+pre.out{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:260px;overflow:auto;font-size:12px;white-space:pre-wrap;word-break:break-word}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+@media print{
+  body{background:#fff;color:#000}
+  .steps,.progress,.nav,.toolbar,.actions,.no-print,footer{display:none!important}
+  .card{border:none;padding:0}
+  .summary dl{grid-template-columns:38% 1fr}
+}
+</style>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" id="logo">M</div>
+      <div>
+        <h1 id="appTitle">Lieferanten-Selbstauskunft</h1>
+        <p id="appSub">Co-Manufacturing · Molkereiprodukte</p>
+      </div>
+    </div>
+    <div class="toolbar no-print">
+      <span class="save-state" id="saveState"></span>
+      <button class="btn ghost" id="btnImport" title="Zuvor gespeicherten Entwurf laden">Entwurf laden</button>
+      <button class="btn ghost" id="btnTheme" title="Hell/Dunkel">◐</button>
+      <input type="file" id="fileImport" accept="application/json,.json" class="hidden">
+    </div>
+  </header>
+
+  <section class="card intro" id="intro">
+    <h2>Willkommen</h2>
+    <p id="introText"></p>
+    <p>Der Fragebogen dauert etwa <strong>15–20 Minuten</strong>. Ihre Eingaben werden automatisch <strong>nur lokal in Ihrem Browser</strong> gespeichert. Sie können jederzeit unterbrechen und später weitermachen. Am Ende erzeugen Sie eine Datei (JSON und/oder PDF), die Sie uns zusenden.</p>
+    <p class="notice" id="deadlineNote"></p>
+    <div class="nav"><span></span><button class="btn" id="btnStart">Fragebogen starten →</button></div>
+  </section>
+
+  <div id="formArea" class="hidden">
+    <nav class="steps" id="steps" aria-label="Abschnitte"></nav>
+    <div class="progress"><div id="progressBar"></div></div>
+    <section class="card" id="sectionCard"></section>
+  </div>
+
+  <footer>Ihre Angaben werden vertraulich behandelt und ausschließlich zur Lieferantenbewertung verwendet.</footer>
+</div>
+
+<script>
+/* =====================================================================
+   KONFIGURATION: hier die eigenen Daten eintragen
+   ===================================================================== */
+const CONFIG = {
+  auftraggeber: "Ihre Molkerei GmbH",        // Ihr Firmenname
+  logoText: "M",                              // 1–2 Buchstaben fürs Logo
+  kontaktName: "Max Mustermann, Einkauf",
+  kontaktEmail: "einkauf@ihre-molkerei.de",   // Empfänger der Antworten
+  rueckmeldungBis: "",                        // z. B. "31.01.2027" (leer = kein Hinweis)
+  version: "1.0"
+};
+
+/* =====================================================================
+   FRAGEBOGEN-DEFINITION
+   type: text | email | tel | url | number | date | textarea | select | radio | multi | scale | yesno | consent
+   ===================================================================== */
+const YESNO = ["Ja","Nein","In Planung"];
+const SECTIONS = [
+  { id:"firma", title:"Unternehmen", desc:"Grunddaten zu Ihrem Unternehmen und Ihrer Ansprechperson.", fields:[
+    {id:"firmenname",label:"Firmenname",type:"text",required:true},
+    {id:"konzern",label:"Konzern-/Gruppenzugehörigkeit",type:"text",hint:"Falls zutreffend"},
+    {row:[
+      {id:"strasse",label:"Straße, Nr.",type:"text",required:true},
+      {id:"plz_ort",label:"PLZ, Ort",type:"text",required:true}]},
+    {row:[
+      {id:"land",label:"Land",type:"text",required:true},
+      {id:"website",label:"Website",type:"url"}]},
+    {row:[
+      {id:"gruendung",label:"Gründungsjahr",type:"number"},
+      {id:"mitarbeiter",label:"Anzahl Mitarbeitende",type:"select",options:["< 50","50–249","250–999","1.000–4.999","≥ 5.000"]}]},
+    {id:"umsatz",label:"Jahresumsatz (Mio. €)",type:"select",options:["< 10","10–50","50–250","250–1.000","> 1.000","Keine Angabe"]},
+    {id:"standorte",label:"Produktionsstandorte (Ort, Land)",type:"textarea",hint:"Bitte alle Werke nennen, die für eine Lohnherstellung in Frage kommen."},
+    {row:[
+      {id:"kontakt_name",label:"Ansprechperson",type:"text",required:true},
+      {id:"kontakt_funktion",label:"Funktion",type:"text"}]},
+    {row:[
+      {id:"kontakt_email",label:"E-Mail",type:"email",required:true},
+      {id:"kontakt_tel",label:"Telefon",type:"tel"}]}
+  ]},
+  { id:"portfolio", title:"Produkte & Technologie", desc:"Welche Produkte stellen Sie her und welche Technologien setzen Sie ein?", fields:[
+    {id:"produktgruppen",label:"Produktgruppen",type:"multi",required:true,options:[
+      "Konsummilch (Frischmilch)","ESL-Milch","H-Milch (UHT)","Milchmischgetränke","Joghurt / Joghurterzeugnisse","Trinkjoghurt / Kefir / Buttermilch",
+      "Quark / Skyr","Frischkäse","Hüttenkäse","Schnittkäse","Hartkäse","Weichkäse","Mozzarella / Pasta Filata","Schmelzkäse",
+      "Butter / Butterzubereitungen","Sahne / Schlagsahne","Saure Sahne / Crème fraîche","Desserts / Pudding","Milchpulver / Babynahrung-Basis",
+      "Molkenprodukte / WPC","Kondensmilch","Speiseeis","Pflanzliche Alternativen","Sonstiges"]},
+    {id:"spezial",label:"Spezialsortimente",type:"multi",options:[
+      "Bio","Laktosefrei","High-Protein","Zuckerreduziert","A2-Milch","Weidemilch","Heumilch","Ziegen-/Schafmilch","Halal","Koscher","Vegan"]},
+    {id:"technologien",label:"Verfügbare Technologien",type:"multi",options:[
+      "Pasteurisation","Hocherhitzung / ESL","UHT (direkt)","UHT (indirekt)","Mikrofiltration","Ultrafiltration","Umkehrosmose",
+      "Laktosespaltung","Fermentation (eigene Kulturen)","Sprühtrocknung","Eindampfung","Aseptische Abfüllung","Clean-Room / ultraclean Abfüllung",
+      "Käsereifung (eigene Reifekeller)","Schneiden / Reiben / Portionieren"]},
+    {id:"entwicklung",label:"Eigene Produkt- & Rezepturentwicklung (F&E)",type:"radio",options:["Ja, eigenes Team","Eingeschränkt","Nein, nur nach Kundenrezeptur"]},
+    {id:"pilotanlage",label:"Pilotanlage / Kleinchargen für Tests verfügbar",type:"radio",options:YESNO},
+    {id:"portfolio_kommentar",label:"Ergänzungen zum Portfolio",type:"textarea"}
+  ]},
+  { id:"kapazitaet", title:"Kapazität & Abfüllung", desc:"Mengen, freie Kapazitäten und Verpackungsformate.", fields:[
+    {row:[
+      {id:"milchmenge",label:"Verarbeitete Milchmenge (Mio. kg/Jahr)",type:"number",required:true},
+      {id:"freie_kap",label:"Freie Kapazität für Lohnherstellung",type:"select",required:true,options:["< 5 %","5–15 %","15–30 %","> 30 %","Nach Absprache"]}]},
+    {id:"verpackung",label:"Verpackungsformate",type:"multi",required:true,options:[
+      "Becher (PP/PS)","Becher (Karton/Papier)","Glas","PET-Flasche","HDPE-Flasche","Getränkekarton (Giebel)","Getränkekarton (aseptisch)",
+      "Eimer","Beutel / Pouch","Folienverpackung (Käse)","Block / Barren","Bag-in-Box","Big Bag / Sack (Pulver)","Tank / Bulk"]},
+    {id:"fuellgroessen",label:"Füllgrößen / Gebinde (von – bis)",type:"text",hint:"z. B. 125 g – 1 kg; 200 ml – 1,5 l"},
+    {row:[
+      {id:"moq",label:"Mindestbestellmenge (MOQ) je Artikel",type:"text",hint:"z. B. 10 t oder 50.000 Einheiten"},
+      {id:"vorlauf",label:"Typische Vorlaufzeit (Wochen)",type:"number"}]},
+    {row:[
+      {id:"schicht",label:"Schichtmodell",type:"select",options:["1-Schicht","2-Schicht","3-Schicht","Vollkonti (24/7)"]},
+      {id:"neuprodukt",label:"Zeit bis Serienstart Neuprodukt (Monate)",type:"number"}]},
+    {id:"saison",label:"Saisonale Engpässe oder Flexibilität",type:"textarea"}
+  ]},
+  { id:"rohstoffe", title:"Rohstoffe & Herkunft", desc:"Milchbeschaffung, Herkunft und Rohstoff-Standards.", fields:[
+    {id:"milchquelle",label:"Milchbezug",type:"multi",options:["Eigene Genossenschaftsmitglieder","Vertragslandwirte","Zukauf Spotmarkt","Zukauf Konzentrate / Rahm"]},
+    {id:"herkunft",label:"Herkunftsregion der Rohmilch",type:"text",hint:"z. B. Bayern, Deutschland, EU"},
+    {id:"standards",label:"Rohstoff-Standards",type:"multi",options:[
+      "Ohne Gentechnik (VLOG)","QM-Milch","QM++ / Tierwohl-Stufen","Weidemilch (Pro Weideland)","Heumilch g.t.S.","Bio (EU-Öko-VO)","Bio-Verband (Bioland, Naturland, Demeter …)","Regionalfenster"]},
+    {id:"kundenrohstoff",label:"Können vom Kunden beigestellte Rohstoffe/Verpackungen verarbeitet werden?",type:"radio",options:["Ja","Teilweise","Nein"]},
+    {id:"rueckverfolgung",label:"Rückverfolgbarkeit bis zum Erzeugerbetrieb",type:"radio",options:["Ja, vollständig","Bis Sammeltour","Nein"]}
+  ]},
+  { id:"qualitaet", title:"Qualität & Zertifikate", desc:"Zertifizierungen, Qualitätsmanagement und Lebensmittelsicherheit.", fields:[
+    {id:"zertifikate",label:"Gültige Zertifizierungen",type:"multi",required:true,options:[
+      "IFS Food","BRCGS Food","FSSC 22000","ISO 22000","ISO 9001","ISO 14001","ISO 50001","QS","EU-Bio","VLOG","Halal","Koscher","SMETA / Sedex","Keine"]},
+    {row:[
+      {id:"ifs_level",label:"IFS/BRC-Ergebnis (letztes Audit)",type:"select",options:["Higher Level / AA","Foundation Level / A","B oder niedriger","Nicht zutreffend"]},
+      {id:"audit_datum",label:"Datum letztes Audit",type:"date"}]},
+    {id:"labor",label:"Eigenes Labor",type:"radio",options:["Mikrobiologie & Chemie","Nur Mikrobiologie","Nur Chemie / Physik","Extern"]},
+    {id:"allergene",label:"Allergenmanagement – verarbeitete Allergene außer Milch",type:"multi",options:["Keine","Gluten","Nüsse / Schalenfrüchte","Erdnuss","Soja","Ei","Sesam","Sonstige"]},
+    {id:"rueckruf",label:"Rückrufe / öffentliche Warnungen in den letzten 3 Jahren",type:"radio",required:true,options:["Keine","Ja (bitte unten erläutern)"]},
+    {id:"rueckruf_details",label:"Erläuterung",type:"textarea",showIf:{field:"rueckruf",equals:"Ja (bitte unten erläutern)"}},
+    {id:"kundenaudits",label:"Kundenaudits vor Ort möglich",type:"radio",options:["Ja","Nach Vereinbarung","Nein"]}
+  ]},
+  { id:"nachhaltigkeit", title:"Nachhaltigkeit", desc:"Umwelt, Energie und soziale Verantwortung.", fields:[
+    {id:"co2",label:"CO₂-Bilanz (Product / Corporate Carbon Footprint)",type:"radio",options:["Scope 1–3","Scope 1–2","In Planung","Nein"]},
+    {id:"klimaziel",label:"Klimaziele (z. B. SBTi) verabschiedet",type:"radio",options:YESNO},
+    {id:"oekostrom",label:"Anteil erneuerbare Energie (%)",type:"number"},
+    {id:"ecovadis",label:"EcoVadis-Rating",type:"select",options:["Platin","Gold","Silber","Bronze","Bewertet ohne Medaille","Nicht bewertet"]},
+    {id:"lksg",label:"Erfüllung Sorgfaltspflichten (LkSG / CSDDD) dokumentiert",type:"radio",options:YESNO},
+    {id:"nachhaltig_kommentar",label:"Weitere Maßnahmen (Wasser, Verpackung, Tierwohl …)",type:"textarea"}
+  ]},
+  { id:"zusammenarbeit", title:"Zusammenarbeit", desc:"Erfahrung in der Lohnherstellung, Logistik und Rahmenbedingungen.", fields:[
+    {id:"erfahrung",label:"Erfahrung in Lohnherstellung / Private Label",type:"radio",required:true,options:["> 10 Jahre","3–10 Jahre","< 3 Jahre","Bisher keine"]},
+    {id:"anteil_lohn",label:"Anteil Lohnherstellung am Gesamtvolumen",type:"select",options:["0 %","< 10 %","10–30 %","30–60 %","> 60 %"]},
+    {id:"referenzen",label:"Referenzkunden / Marken (soweit zulässig)",type:"textarea"},
+    {id:"nda",label:"Bereitschaft zur Geheimhaltungsvereinbarung (NDA)",type:"radio",options:["Ja","Nein"]},
+    {id:"logistik",label:"Logistik",type:"multi",options:["Eigene Kühllogistik","Kühllager vor Ort","Tiefkühllager","Versand europaweit","Versand weltweit","Abholung durch Kunden"]},
+    {id:"incoterms",label:"Bevorzugte Lieferbedingungen (Incoterms)",type:"text",hint:"z. B. EXW, FCA, DAP"},
+    {id:"sprachen",label:"Projektsprachen",type:"multi",options:["Deutsch","Englisch","Französisch","Italienisch","Niederländisch","Polnisch","Sonstige"]},
+    {id:"interesse",label:"Wie hoch ist Ihr Interesse an einer Zusammenarbeit?",type:"scale",options:["1","2","3","4","5"],hint:"1 = gering, 5 = sehr hoch"},
+    {id:"kommentar",label:"Weitere Anmerkungen",type:"textarea"},
+    {id:"einwilligung",label:"Ich bestätige die Richtigkeit der Angaben und bin einverstanden, dass diese zur Lieferantenbewertung gespeichert und verarbeitet werden.",type:"consent",required:true}
+  ]}
+];
+
+/* ===================================================================== */
+const STORE_KEY = "lieferanten-selbstauskunft-v1";
+let answers = {};
+let current = 0;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const allFields = () => SECTIONS.flatMap(s => s.fields.flatMap(f => f.row ? f.row : [f]).map(f => ({...f, section:s})));
+const isVisible = f => !f.showIf || answers[f.showIf.field] === f.showIf.equals;
+const isEmpty = v => v == null || v === "" || (Array.isArray(v) && v.length === 0) || v === false;
+
+function load(){ try{ const d = JSON.parse(localStorage.getItem(STORE_KEY)||"null"); if(d){answers=d.answers||{}; current=d.current||0;} }catch(e){} }
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({answers,current})); $("#saveState").textContent = "Automatisch gespeichert " + new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}); }
+  catch(e){ $("#saveState").textContent = "Lokales Speichern nicht möglich – bitte Entwurf exportieren"; }
+}
+
+function fieldHTML(f){
+  const v = answers[f.id];
+  const req = f.required ? '<span class="req" aria-hidden="true">*</span>' : "";
+  const hint = f.hint ? `<div class="hint">${esc(f.hint)}</div>` : "";
+  const err = `<div class="err-msg">Bitte ausfüllen.</div>`;
+  const hide = isVisible(f) ? "" : " hidden";
+  let input = "";
+  switch(f.type){
+    case "textarea": input = `<textarea id="f_${f.id}" data-id="${f.id}">${esc(v)}</textarea>`; break;
+    case "select": input = `<select id="f_${f.id}" data-id="${f.id}"><option value="">– bitte wählen –</option>${f.options.map(o=>`<option${v===o?" selected":""}>${esc(o)}</option>`).join("")}</select>`; break;
+    case "radio": case "multi": {
+      const t = f.type==="radio" ? "radio" : "checkbox";
+      const arr = Array.isArray(v) ? v : [];
+      input = `<div class="choices" role="group">${f.options.map(o=>{const c = t==="radio" ? v===o : arr.includes(o);
+        return `<label class="choice${c?" checked":""}"><input type="${t}" name="${f.id}" value="${esc(o)}" data-id="${f.id}"${c?" checked":""}><span>${esc(o)}</span></label>`}).join("")}</div>`;
+      break; }
+    case "scale": input = `<div class="scale">${f.options.map(o=>`<label class="${v===o?"checked":""}"><input type="radio" name="${f.id}" value="${o}" data-id="${f.id}"${v===o?" checked":""}>${o}</label>`).join("")}</div>`; break;
+    case "consent":
+      return `<div class="field${hide}" data-field="${f.id}"><label class="choice${v?" checked":""}"><input type="checkbox" data-id="${f.id}" data-consent="1"${v?" checked":""}><span>${esc(f.label)}${req}</span></label>${err}</div>`;
+    default: input = `<input type="${f.type}" id="f_${f.id}" data-id="${f.id}" value="${esc(v)}"${f.type==="number"?' inputmode="decimal" min="0"':""}>`;
+  }
+  const lbl = ["radio","multi","scale"].includes(f.type) ? `<span class="label">${esc(f.label)}${req}</span>` : `<label for="f_${f.id}">${esc(f.label)}${req}</label>`;
+  return `<div class="field${hide}" data-field="${f.id}">${lbl}${input}${hint}${err}</div>`;
+}
+
+function renderSteps(){
+  const total = SECTIONS.length + 1;
+  $("#steps").innerHTML = [...SECTIONS.map(s=>s.title),"Übersicht & Absenden"].map((t,i)=>
+    `<button class="${i===current?"active":""} ${i<SECTIONS.length && sectionComplete(SECTIONS[i])?"done":""}" data-step="${i}">${i+1}. ${esc(t)}</button>`).join("");
+  $("#progressBar").style.width = Math.round(completion()*100) + "%";
+  $("#steps").querySelector(".active")?.scrollIntoView({block:"nearest",inline:"center"});
+}
+function sectionComplete(s){ return s.fields.flatMap(f=>f.row||[f]).filter(f=>f.required && isVisible(f)).every(f=>!isEmpty(answers[f.id])); }
+function completion(){ const fs = allFields().filter(isVisible); return fs.filter(f=>!isEmpty(answers[f.id])).length / fs.length; }
+
+function render(){
+  renderSteps();
+  const card = $("#sectionCard");
+  if(current >= SECTIONS.length){ renderSummary(); return; }
+  const s = SECTIONS[current];
+  card.innerHTML = `<h2>${esc(s.title)}</h2><p class="section-desc">${esc(s.desc)}</p>
+    ${s.fields.map(f => f.row ? `<div class="grid2">${f.row.map(fieldHTML).join("")}</div>` : fieldHTML(f)).join("")}
+    <div class="nav"><button class="btn secondary" id="btnPrev"${current===0?" disabled":""}>← Zurück</button><button class="btn" id="btnNext">Weiter →</button></div>`;
+  card.querySelectorAll("[data-id]").forEach(el => el.addEventListener(el.matches("input[type=text],input[type=email],input[type=tel],input[type=url],input[type=number],input[type=date],textarea")?"input":"change", onInput));
+  $("#btnPrev").onclick = () => go(current-1);
+  $("#btnNext").onclick = () => { if(validate(s)) go(current+1); };
+}
+
+function onInput(e){
+  const el = e.target, id = el.dataset.id;
+  if(el.dataset.consent) answers[id] = el.checked;
+  else if(el.type === "checkbox"){
+    const set = new Set(answers[id]||[]); el.checked ? set.add(el.value) : set.delete(el.value);
+    const f = allFields().find(x=>x.id===id);
+    answers[id] = f.options.filter(o=>set.has(o));
+  } else answers[id] = el.value;
+  if(el.type==="checkbox"||el.type==="radio"){
+    el.closest(".choices,.scale,.field")?.querySelectorAll("label").forEach(l=>{const i=l.querySelector("input"); if(i) l.classList.toggle("checked", i.checked);});
+  }
+  el.closest(".field")?.classList.remove("invalid");
+  // abhängige Felder ein-/ausblenden
+  allFields().filter(f=>f.showIf && f.showIf.field===id).forEach(f=>document.querySelector(`[data-field="${f.id}"]`)?.classList.toggle("hidden", !isVisible(f)));
+  save(); renderSteps();
+}
+
+function validate(s){
+  let first = null;
+  s.fields.flatMap(f=>f.row||[f]).forEach(f=>{
+    const node = document.querySelector(`[data-field="${f.id}"]`); if(!node) return;
+    let bad = f.required && isVisible(f) && isEmpty(answers[f.id]);
+    if(!bad && f.type==="email" && answers[f.id] && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers[f.id])){ bad = true; node.querySelector(".err-msg").textContent = "Bitte gültige E-Mail-Adresse angeben."; }
+    node.classList.toggle("invalid", !!bad); if(bad && !first) first = node;
+  });
+  if(first){ first.scrollIntoView({behavior:"smooth",block:"center"}); first.querySelector("input,select,textarea")?.focus({preventScroll:true}); return false; }
+  return true;
+}
+
+function go(i){ current = Math.max(0, Math.min(SECTIONS.length, i)); save(); render(); window.scrollTo({top:0,behavior:"smooth"}); }
+
+function fmt(v){ return Array.isArray(v) ? v.join(", ") : (v===true ? "Ja" : v); }
+
+function renderSummary(){
+  const missing = SECTIONS.filter(s=>!sectionComplete(s));
+  const card = $("#sectionCard");
+  card.innerHTML = `<h2>Übersicht & Absenden</h2>
+    <p class="section-desc no-print">Bitte prüfen Sie Ihre Angaben. Anschließend laden Sie die Antwortdatei herunter und senden sie an <strong>${esc(CONFIG.kontaktEmail)}</strong>.</p>
+    ${missing.length ? `<div class="notice no-print"><strong class="missing">Noch offene Pflichtangaben:</strong> ${missing.map(s=>`<a href="#" data-goto="${SECTIONS.indexOf(s)}">${esc(s.title)}</a>`).join(", ")}</div>`
+      : `<div class="notice success no-print">Alle Pflichtangaben sind vollständig. Vielen Dank!</div>`}
+    <div class="actions">
+      <button class="btn" id="btnDownload"${missing.length?" disabled":""}>⬇ Antwortdatei herunterladen (JSON)</button>
+      <button class="btn secondary" id="btnHtml">⬇ Zusammenfassung zum Drucken (HTML)</button>
+      <button class="btn secondary" id="btnCopy"${missing.length?" disabled":""}>Antworten kopieren</button>
+      <button class="btn ghost" id="btnReset">Alle Eingaben löschen</button>
+    </div>
+    <div class="confirm hidden" id="resetConfirm"><span>Wirklich alle Eingaben löschen?</span><button class="btn ghost" id="resetYes">Ja, löschen</button><button class="btn ghost" id="resetNo">Abbrechen</button></div>
+    <p class="hint no-print" id="actionMsg" aria-live="polite"></p>
+    <div class="notice no-print">Bitte senden Sie die Antwortdatei an <strong id="mailAddr">${esc(CONFIG.kontaktEmail)}</strong> <button class="btn ghost" id="btnCopyMail" style="padding:2px 8px;font-size:12px">Adresse kopieren</button>. Gültige Zertifikate können Sie gern direkt beifügen.</div>
+    <pre class="out hidden" id="jsonOut"></pre>
+    <div class="summary">
+      <p class="hint">Selbstauskunft für ${esc(CONFIG.auftraggeber)} · erstellt am ${new Date().toLocaleDateString("de-DE")}</p>
+      ${SECTIONS.map(s=>`<h3>${esc(s.title)}</h3><dl>${s.fields.flatMap(f=>f.row||[f]).filter(isVisible).map(f=>
+        `<dt>${esc(f.type==="consent"?"Einwilligung":f.label)}</dt><dd>${isEmpty(answers[f.id]) ? `<span class="${f.required?"missing":"hint"}">${f.required?"fehlt":"–"}</span>` : esc(fmt(answers[f.id]))}</dd>`).join("")}</dl>`).join("")}
+    </div>
+    <div class="nav"><button class="btn secondary" id="btnPrev">← Zurück</button><span></span></div>`;
+  card.querySelectorAll("[data-goto]").forEach(a=>a.onclick = e => { e.preventDefault(); go(+a.dataset.goto); });
+  $("#btnPrev").onclick = () => go(current-1);
+  $("#btnDownload").onclick = downloadJSON;
+  $("#btnHtml").onclick = downloadHTML;
+  $("#btnCopy").onclick = () => copyText(JSON.stringify(exportData(),null,2), "Antworten in die Zwischenablage kopiert. Fügen Sie sie in eine E-Mail ein.");
+  $("#btnCopyMail").onclick = () => copyText(CONFIG.kontaktEmail, "E-Mail-Adresse kopiert.");
+  $("#btnReset").onclick = () => $("#resetConfirm").classList.remove("hidden");
+  $("#resetNo").onclick = () => $("#resetConfirm").classList.add("hidden");
+  $("#resetYes").onclick = () => { answers={}; current=0; save(); render(); };
+}
+
+function exportData(){
+  return {
+    typ: "lieferanten-selbstauskunft", version: CONFIG.version, auftraggeber: CONFIG.auftraggeber,
+    erstellt: new Date().toISOString(),
+    antworten: allFields().filter(isVisible).map(f=>({abschnitt:f.section.title, id:f.id, frage:f.label, antwort: answers[f.id] ?? null})),
+    rohdaten: answers
+  };
+}
+function fileName(){ return "Selbstauskunft_" + (answers.firmenname||"Lieferant").replace(/[^\wäöüÄÖÜß-]+/g,"_") + "_" + new Date().toISOString().slice(0,10) + ".json"; }
+function msg(t){ const m=$("#actionMsg"); if(m) m.textContent=t; }
+let dlApi; const dlReady = (window.claude?.use ? window.claude.use("downloads") : Promise.resolve(null)).then(d=>dlApi=d).catch(()=>dlApi=null);
+async function saveFile(filename, data){
+  await dlReady;
+  if(dlApi){
+    try{ await dlApi.save({filename, data}); msg(`Gespeichert: ${filename}. Bitte an ${CONFIG.kontaktEmail} senden.`); return; }
+    catch(e){ if(e && e.code==="declined"){ msg("Speichern abgebrochen."); return; } if(e && e.code==="rate_limited"){ msg("Bitte einen Moment warten und erneut versuchen."); return; } }
+  }
+  // Fallback: Inhalt anzeigen, damit er kopiert werden kann
+  const out=$("#jsonOut"); out.textContent=data; out.classList.remove("hidden");
+  msg("Download ist hier nicht verfügbar. Bitte den Inhalt unten kopieren oder „Antworten kopieren“ nutzen.");
+}
+function downloadJSON(){ saveFile(fileName(), JSON.stringify(exportData(),null,2)); }
+function downloadHTML(){
+  const body = document.querySelector(".summary").innerHTML;
+  const css = "body{font:14px/1.5 system-ui,sans-serif;max-width:800px;margin:24px auto;padding:0 16px;color:#1d2430}h3{border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:24px}dl{display:grid;grid-template-columns:38% 1fr;gap:6px 16px}dt{color:#5d6675}dd{margin:0;white-space:pre-wrap}.hint{color:#5d6675}.missing{color:#b5651d}";
+  saveFile(fileName().replace(/\.json$/,".html"), `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Selbstauskunft ${esc(answers.firmenname||"")}</title><style>${css}</style></head><body><h1>Lieferanten-Selbstauskunft</h1>${body}</body></html>`);
+}
+async function copyText(t, ok){
+  try{ await navigator.clipboard.writeText(t); msg(ok); }
+  catch(_){ const out=$("#jsonOut"); out.textContent=t; out.classList.remove("hidden"); const rg=document.createRange(); rg.selectNodeContents(out); const s=getSelection(); s.removeAllRanges(); s.addRange(rg); msg("Text markiert. Bitte mit Strg+C / ⌘+C kopieren."); }
+}
+
+/* Init */
+function init(){
+  $("#logo").textContent = CONFIG.logoText;
+  $("#appSub").textContent = `Co-Manufacturing · ${CONFIG.auftraggeber}`;
+  $("#introText").innerHTML = `<strong>${esc(CONFIG.auftraggeber)}</strong> sucht leistungsfähige Partner für die Lohnherstellung (Co-Manufacturing) von Molkereiprodukten. Mit dieser Selbstauskunft lernen wir Ihr Unternehmen, Ihre Technologien und Kapazitäten kennen. Ansprechperson: ${esc(CONFIG.kontaktName)} (<strong>${esc(CONFIG.kontaktEmail)}</strong>).`;
+  if(CONFIG.rueckmeldungBis) $("#deadlineNote").innerHTML = `Bitte senden Sie uns Ihre Antworten bis <strong>${esc(CONFIG.rueckmeldungBis)}</strong>.`; else $("#deadlineNote").remove();
+  load();
+  if(Object.keys(answers).length){ $("#btnStart").textContent = "Fortsetzen →"; }
+  $("#btnStart").onclick = () => { $("#intro").classList.add("hidden"); $("#formArea").classList.remove("hidden"); render(); };
+  $("#steps").addEventListener("click", e => { const b = e.target.closest("[data-step]"); if(b) go(+b.dataset.step); });
+  $("#btnImport").onclick = () => $("#fileImport").click();
+  $("#fileImport").onchange = async e => {
+    const file = e.target.files[0]; if(!file) return;
+    try{ const d = JSON.parse(await file.text()); if(d.typ!=="lieferanten-selbstauskunft" || !d.rohdaten) throw 0;
+      answers = d.rohdaten; save(); $("#intro").classList.add("hidden"); $("#formArea").classList.remove("hidden"); go(0);
+    }catch(_){ $("#saveState").textContent = "Die Datei konnte nicht gelesen werden."; }
+    e.target.value = "";
+  };
+  $("#btnTheme").onclick = () => { const r=document.documentElement; const dark = r.dataset.theme ? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches; r.dataset.theme = dark?"light":"dark"; };
+}
+init();
+</script>

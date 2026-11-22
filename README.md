@@ -30,3 +30,8 @@ Alle Fragen stehen im Array `SECTIONS` in `index.html`. Jede Frage hat `id`, `la
 
 ## Datenschutz
 Alles läuft lokal im Browser. Es werden keine Daten an einen Server übertragen.
+
+## Artefakt-Version (claude.ai)
+`artifact/selbstauskunft.html` ist eine angepasste Fassung für claude.ai-Artefakte. Dort sind Druck, `mailto:`-Links und
+direkte Downloads gesperrt. Stattdessen läuft der Download über die Speicherfunktion der Plattform, mit Kopieren als Ausweichlösung.
+Externe Personen können in einem Artefakt keine Daten speichern. Antworten kommen deshalb auch hier per Datei bzw. E-Mail zurück.
