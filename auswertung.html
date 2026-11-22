@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lieferanten-Auswertung</title>
+<style>
+:root{--bg:#f6f4ee;--surface:#fff;--surface-2:#f0ede4;--text:#1d2430;--muted:#5d6675;--border:#ddd8cb;--accent:#1f5f8b;--accent-ink:#fff;--accent-soft:#e3eef6;--ok:#2e7d4f;--warn:#b5651d;--err:#b3261e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#14181e;--surface:#1c222a;--surface-2:#242b35;--text:#e8ebef;--muted:#9aa3af;--border:#323a46;--accent:#6fb1df;--accent-ink:#0d1a24;--accent-soft:#1f3242;--ok:#6cc08f;--warn:#e3a35f;--err:#ef7b72}}
+:root[data-theme="dark"]{--bg:#14181e;--surface:#1c222a;--surface-2:#242b35;--text:#e8ebef;--muted:#9aa3af;--border:#323a46;--accent:#6fb1df;--accent-ink:#0d1a24;--accent-soft:#1f3242;--ok:#6cc08f;--warn:#e3a35f;--err:#ef7b72}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}.muted{color:var(--muted)}
+.drop{display:block;border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;background:var(--surface);margin:16px 0;cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.btn{font:inherit;font-weight:600;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--border)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:14px}
+th{background:var(--surface-2);position:sticky;top:0;cursor:pointer;white-space:nowrap}
+tr:hover td{background:var(--accent-soft)}
+.score{font-weight:700;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;border:1px solid var(--border);margin:1px 2px 1px 0}
+details{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-top:12px}
+details summary{cursor:pointer;font-weight:600}
+dl{display:grid;grid-template-columns:minmax(160px,35%) 1fr;gap:4px 16px}dt{color:var(--muted)}dd{margin:0;white-space:pre-wrap}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lieferanten-Auswertung</h1>
+  <p class="muted">Laden Sie die von Lieferanten erhaltenen JSON-Dateien. Alles wird lokal im Browser verarbeitet, es werden keine Daten hochgeladen.</p>
+  <label class="drop" id="drop">Dateien hierher ziehen oder <u>auswählen</u><input type="file" id="files" accept=".json,application/json" multiple class="hidden"></label>
+  <div id="result" class="hidden">
+    <div class="bar">
+      <strong id="count"></strong>
+      <span style="flex:1"></span>
+      <button class="btn ghost" id="btnClear">Liste leeren</button>
+      <button class="btn" id="btnCsv">Als CSV exportieren (Excel)</button>
+    </div>
+    <div class="tablewrap"><table id="tbl"></table></div>
+    <p class="muted" style="font-size:13px">Der <strong>Fit-Score (0–100)</strong> ist eine grobe Orientierung: Zertifikate (IFS/BRC/FSSC, Ergebnis), freie Kapazität, Erfahrung in der Lohnherstellung, F&amp;E, keine Rückrufe, Nachhaltigkeit und Interesse. Die Gewichtung lässt sich in <code>WEIGHTS</code> im Quelltext anpassen.</p>
+    <div id="details"></div>
+  </div>
+</div>
+<script>
+const WEIGHTS = { zert:25, auditLevel:10, kapazitaet:15, erfahrung:15, entwicklung:10, rueckruf:10, nachhaltigkeit:5, interesse:10 };
+let rows = [];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = v => Array.isArray(v) ? v.join(", ") : (v===true ? "Ja" : (v ?? ""));
+
+function score(a){
+  const z = a.zertifikate||[]; let s = 0;
+  s += WEIGHTS.zert * (z.some(x=>["IFS Food","BRCGS Food","FSSC 22000"].includes(x)) ? 1 : z.includes("ISO 22000") ? .6 : z.includes("ISO 9001") ? .3 : 0);
+  s += WEIGHTS.auditLevel * ({"Higher Level / AA":1,"Foundation Level / A":.6,"B oder niedriger":.2}[a.ifs_level]||0);
+  s += WEIGHTS.kapazitaet * ({"> 30 %":1,"15–30 %":.75,"Nach Absprache":.5,"5–15 %":.4,"< 5 %":.1}[a.freie_kap]||0);
+  s += WEIGHTS.erfahrung * ({"> 10 Jahre":1,"3–10 Jahre":.7,"< 3 Jahre":.35}[a.erfahrung]||0);
+  s += WEIGHTS.entwicklung * ({"Ja, eigenes Team":1,"Eingeschränkt":.5}[a.entwicklung]||0);
+  s += WEIGHTS.rueckruf * (a.rueckruf==="Keine" ? 1 : 0);
+  s += WEIGHTS.nachhaltigkeit * ((["Scope 1–3","Scope 1–2"].includes(a.co2)?.5:0) + (a.klimaziel==="Ja"?.25:0) + ((+a.oekostrom||0)>=50?.25:0));
+  s += WEIGHTS.interesse * ((+a.interesse||0)/5);
+  return Math.round(s);
+}
+
+const COLS = [
+  ["Fit-Score", a=>score(a)], ["Unternehmen", a=>a.firmenname], ["Land", a=>a.land],
+  ["Produktgruppen", a=>a.produktgruppen], ["Milchmenge (Mio. kg)", a=>a.milchmenge], ["Freie Kapazität", a=>a.freie_kap],
+  ["Verpackung", a=>a.verpackung], ["Zertifikate", a=>a.zertifikate], ["Audit", a=>a.ifs_level],
+  ["Erfahrung Lohnherst.", a=>a.erfahrung], ["Rückrufe", a=>a.rueckruf], ["Interesse", a=>a.interesse],
+  ["Kontakt", a=>[a.kontakt_name,a.kontakt_email,a.kontakt_tel].filter(Boolean).join(" · ")]
+];
+let sortCol = 0, sortDir = -1;
+
+function render(){
+  $("#result").classList.toggle("hidden", !rows.length);
+  $("#count").textContent = `${rows.length} Lieferant${rows.length===1?"":"en"}`;
+  const sorted = [...rows].sort((x,y)=>{const a=COLS[sortCol][1](x.a), b=COLS[sortCol][1](y.a);
+    const na=parseFloat(a), nb=parseFloat(b); const r = (!isNaN(na)&&!isNaN(nb)) ? na-nb : String(fmt(a)).localeCompare(String(fmt(b)),"de"); return r*sortDir;});
+  $("#tbl").innerHTML = `<thead><tr>${COLS.map((c,i)=>`<th data-i="${i}">${c[0]}${i===sortCol?(sortDir>0?" ▲":" ▼"):""}</th>`).join("")}</tr></thead>
+    <tbody>${sorted.map(r=>`<tr>${COLS.map((c,i)=>{const v=c[1](r.a);
+      if(i===0) return `<td class="score" style="color:var(${v>=70?"--ok":v>=45?"--warn":"--err"})">${v}</td>`;
+      return `<td>${Array.isArray(v)?v.map(x=>`<span class="pill">${esc(x)}</span>`).join(""):esc(v)}</td>`}).join("")}</tr>`).join("")}</tbody>`;
+  $("#tbl").querySelectorAll("th").forEach(th=>th.onclick=()=>{const i=+th.dataset.i; sortDir = i===sortCol ? -sortDir : -1; sortCol=i; render();});
+  $("#details").innerHTML = sorted.map(r=>`<details><summary>${esc(r.a.firmenname||r.name)} – alle Antworten</summary><dl>${
+    r.d.antworten.map(x=>`<dt>${esc(x.abschnitt)} · ${esc(x.frage)}</dt><dd>${esc(fmt(x.antwort))||"–"}</dd>`).join("")}</dl></details>`).join("");
+}
+
+async function addFiles(list){
+  for(const f of list){
+    try{ const d = JSON.parse(await f.text()); if(d.typ!=="lieferanten-selbstauskunft") throw 0;
+      rows = rows.filter(r=>r.name!==f.name); rows.push({name:f.name, d, a:d.rohdaten||{}});
+    }catch(_){ alert(`"${f.name}" ist keine gültige Antwortdatei.`); }
+  }
+  render();
+}
+
+function csv(){
+  const keys = [...new Set(rows.flatMap(r=>r.d.antworten.map(x=>x.id)))];
+  const labels = Object.fromEntries(rows.flatMap(r=>r.d.antworten.map(x=>[x.id,x.frage])));
+  const cell = v => `"${String(fmt(v)).replace(/"/g,'""')}"`;
+  const lines = [["Fit-Score",...keys.map(k=>labels[k])].map(cell).join(";"),
+    ...rows.map(r=>[score(r.a),...keys.map(k=>r.a[k])].map(cell).join(";"))];
+  const blob = new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a = Object.assign(document.createElement("a"),{href:URL.createObjectURL(blob),download:`Lieferanten_Auswertung_${new Date().toISOString().slice(0,10)}.csv`});
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+const drop = $("#drop");
+$("#files").onchange = e => { addFiles(e.target.files); e.target.value=""; };
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop", e => addFiles(e.dataTransfer.files));
+$("#btnCsv").onclick = csv;
+$("#btnClear").onclick = () => { rows=[]; render(); };
+</script>
+</body>
+</html>
